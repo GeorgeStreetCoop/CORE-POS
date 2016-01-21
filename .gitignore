@@ -11,7 +11,9 @@ fannie/config.php
 fannie/logs/*.log
 fannie/logs/*.txt
 pos/is4c-nf/scale-drivers/drivers/rs232/ssd
+pos/is4c-nf/ajax-callbacks/fakereceipt.txt
 */tmp/*
+fannie/item/images/done/*
 fannie/item/images/new/*
 fannie/legacy/FE/overshort/acct
 fannie/cache/cachefiles
@@ -34,4 +36,4 @@ fannie/locale/*.pot
 fannie/INSTALL
 vendor
 composer.lock
-!pos/is4c-nf/scale-drivers/drivers/NewMagellan/.paket/paket.bootstrapper.exe
+.DS_Store
