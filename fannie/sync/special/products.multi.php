@@ -78,7 +78,7 @@ $cmd_obfusc = 'mysqldump'
 exec($cmd, $output, $ret);
 if ($ret > 0) {
     if (file_exists($tempfile . '.err')) {
-        $output .= file_get_contents($tempfile . '.err');
+        $output += file($tempfile . '.err');
         unlink($tempfile . '.err');
     }
     $report = implode($lineBreak, $output);
