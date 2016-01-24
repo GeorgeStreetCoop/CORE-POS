@@ -70,8 +70,8 @@ static protected function standardLine($tdate, $lane, $trans, $amt)
     $line = "  ".substr($timeStamp . $blank, 0, 13)
         .substr($lane . $blank, 0, 9)
         .substr($trans . $blank, 0, 8)
-        .substr($blank . number_format("0", 2), -10)
-        .substr($blank . number_format($row["tender"], 2), -14)
+        .substr($blank . '-', -10)
+        .substr($blank . number_format($amt, 2), -14)
         ."\n";
 
     return $line;
