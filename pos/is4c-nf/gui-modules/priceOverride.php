@@ -100,7 +100,7 @@ class PriceOverride extends NoInputCorePage {
         if ($negate) {
             $ttl = $ttl * -1;
         }
-
+   
         $query = sprintf("UPDATE localtemptrans SET unitPrice=%.2f, regPrice=%.2f,
             total = quantity*%.2f, charflag='PO'
             WHERE trans_id=%d",$ttl,$ttl,$ttl,$line_id);
