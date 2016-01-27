@@ -31,7 +31,7 @@ class Comment extends Parser {
     function parse($str){
         $ret = $this->default_json();
         if (strlen($str) > 2){
-            $comment = substr($str,2);
+            $comment = substr(CoreLocal::get('lastInput'),2);
             TransRecord::addcomment($comment);
             $ret['output'] = DisplayLib::lastpage();
         }
