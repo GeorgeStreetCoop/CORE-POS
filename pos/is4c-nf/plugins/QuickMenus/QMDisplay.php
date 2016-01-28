@@ -130,8 +130,8 @@ class QMDisplay extends NoInputCorePage
 
         $my_menu = $this->getMenu();
 
-        echo '<br /><br />';
-        echo '<select name="ddQKselect" id="ddQKselect" style="width:380px;" size="10"
+        echo '<br />';
+        echo '<select name="ddQKselect" id="ddQKselect" style="width:380px;" size="20"
             onblur="$(\'#ddQKselect\').focus();" >';
         $count=1;
         foreach ($my_menu as $label => $value) {
