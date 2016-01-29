@@ -86,16 +86,17 @@ class tenderlist extends NoInputCorePage
     {
         $db = Database::pDataConnect();
         $q = "SELECT TenderCode,TenderName FROM tenders 
-            WHERE MaxAmount > 0
+            WHERE MaxAmount > 0 AND TenderModule <> 'DisabledTender'
             ORDER BY TenderName";
         $r = $db->query($q);
+        $rowcount = $db->num_rows($r);
 
         echo "<div class=\"baseHeight\">"
             ."<div class=\"listbox\">"
             ."<form name=\"selectform\" method=\"post\" action=\"{$_SERVER['PHP_SELF']}\""
             ." id=\"selectform\">"
             ."<select name=\"search\" id=\"search\" "
-            ."size=\"15\" onblur=\"\$('#search').focus();\">";
+            ."size=\"".min($rowcount, 15)."\" onblur=\"\$('#search').focus();\">";
 
         $selected = "selected";
         while($row = $db->fetch_row($r)){
