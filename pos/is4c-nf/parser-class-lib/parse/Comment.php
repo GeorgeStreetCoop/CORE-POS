@@ -23,7 +23,7 @@
 
 class Comment extends Parser {
     function check($str){
-        if (substr($str,0,2) == "CM")
+        if (substr($str,-2) == "CM")
             return True;
         return False;
     }
@@ -31,7 +31,7 @@ class Comment extends Parser {
     function parse($str){
         $ret = $this->default_json();
         if (strlen($str) > 2){
-            $comment = substr($str,2);
+            $comment = substr(CoreLocal::get('lastInput'),0,-2);
             TransRecord::addcomment($comment);
             $ret['output'] = DisplayLib::lastpage();
         }

@@ -138,6 +138,7 @@ class AjaxParser extends AjaxCallback
         if (isset($input['field'])) {
             $in_field = $input['field'];
         }
+        CoreLocal::set('lastInput', trim(FormLib::get($in_field)));
         $entered = strtoupper(trim(FormLib::get($in_field)));
         if (substr($entered, -2) == "CL") $entered = "CL";
 
