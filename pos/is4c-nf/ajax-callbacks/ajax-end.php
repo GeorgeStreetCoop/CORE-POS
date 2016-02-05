@@ -162,8 +162,8 @@ function uploadAndReset($type)
     }
 
     CoreState::memberReset();
-    CoreState::transReset();
     CoreState::printReset();
+    CoreState::transReset();
 
     Database::getsubtotals();
 
