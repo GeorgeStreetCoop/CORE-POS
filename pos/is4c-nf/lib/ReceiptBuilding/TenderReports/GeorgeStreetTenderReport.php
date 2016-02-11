@@ -42,79 +42,77 @@ class GeorgeStreetTenderReport extends TenderReport {
  */
 static public function get()
 {
-    $tenders = CoreLocal::get('TRDesiredTenders');
-    if (!is_array($tenders)) {
-        $tenders = array(
-                'CA' => 'Cash',
-                'CK' => 'Check',
-                'CC' => 'Credit',
-                'DC' => 'PIN Debit',
-                'EF' => 'EBT Foodstamps',
-            );
-    }
-
     $db_a = Database::mDataConnect();
-    $emp_no = CoreLocal::get('CashierNo');
-    $register_no = CoreLocal::get('laneno');
 
-    $receipt = ReceiptLib::biggerFont("Lane {$register_no}, cashier {$emp_no} ".trim(CoreLocal::get('cashier')))."\n\n";
+    $receipt = ReceiptLib::biggerFont("Transaction Summary")."\n\n";
     $receipt .= ReceiptLib::biggerFont(date('D M j Y - g:ia'))."\n\n";
 
-    $report_params = array(
-        'department' => "
-                    SELECT
-                        'departments' Plural,
-                        CONCAT_WS(' ', t.dept_no, t.dept_name) GroupLabel,
-                        SUM(IF(department IN (102, 113) OR scale = 1, 1, d.quantity)) AS GroupQuantity,
-                        'item' AS GroupQuantityLabel,
-                        SUM(d.total) AS GroupValue
-                    FROM dlog AS d
-                        LEFT JOIN core_opdata.departments AS t ON d.department=t.dept_no
-                    WHERE emp_no={$emp_no} AND register_no={$register_no}
-                        AND d.department <> 0 AND d.trans_type <> 'T'
-                    GROUP BY t.dept_no
-                ",
-        'tax' => "
-                    SELECT
-                        'taxes' Plural,
-                        IF(total = 0, 'Non-taxed', 'Taxed') GroupLabel,
-                        COUNT(*) GroupQuantity,
-                        'transaction' AS GroupQuantityLabel,
-                        SUM(total) GroupValue
-                    FROM dlog
-                    WHERE emp_no={$emp_no} AND register_no={$register_no}
-                        AND upc = 'TAX'
-                    GROUP BY (total = 0)
-                ",
-        'discount' => "
-                    SELECT
-                        'discounts' Plural,
-                        CONCAT(percentDiscount, '%') GroupLabel,
-                        COUNT(*) AS GroupQuantity,
-                        'transaction' AS GroupQuantityLabel,
-                        -SUM(total) AS GroupValue
-                    FROM dlog
-                    WHERE emp_no={$emp_no} AND register_no={$register_no}
-                        AND trans_type = 'S'
-                    GROUP BY percentDiscount
-                ",
-        'tender' => "
-                    SELECT
-                        'tenders' Plural,
-                        CONCAT_WS(' ', ttg.tender_code, t.TenderName) GroupLabel,
-                        COUNT(*) GroupQuantity,
-                        'transaction' AS GroupQuantityLabel,
-                        SUM(tender) GroupValue
-                    FROM TenderTapeGeneric ttg
-                        LEFT JOIN core_opdata.tenders t ON ttg.tender_code = t.TenderCode
-                    WHERE emp_no={$emp_no} AND register_no={$register_no}
-                        AND tender_code IN ('".join("', '", array_keys($tenders))."')
-                    GROUP BY tender_code
-                    ORDER BY FIELD(tender_code, 'CA', 'CK', 'CC', 'DC', 'EF', tender_code), tender_code
-                ",
-        );
-
+	$transarchive = 'dtransactions';
+	$report_params = array(
+		'department' => "
+					SELECT
+							'departments' Plural,
+							DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
+							CONCAT_WS(' ', t.dept_no, t.dept_name) GroupLabel,
+							SUM(IF(d.department IN (102, 113) OR d.scale = 1, 1, d.quantity)) GroupQuantity,
+							'item' GroupQuantityLabel,
+							SUM(d.total) GroupValue
+					FROM {$transarchive} d
+							LEFT JOIN office_opdata.departments t ON d.department=t.dept_no
+ 					WHERE d.emp_no != 9999 AND d.register_no != 99
+							AND d.trans_status != 'X'
+							AND d.department != 0
+					GROUP BY TransDate, t.dept_no
+				",
+		'tax' => "
+					SELECT
+						'taxes' Plural,
+						DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
+						IF(d.total = 0, 'Non-taxed', 'Taxed') GroupLabel,
+						COUNT(*) GroupQuantity,
+						'transaction' GroupQuantityLabel,
+						SUM(d.total) GroupValue
+					FROM {$transarchive} d
+					WHERE d.emp_no != 9999 AND d.register_no != 99
+						AND d.trans_status != 'X'
+						AND d.trans_type = 'A' AND d.upc = 'TAX'
+					GROUP BY TransDate, (total = 0)
+				",
+		'discount' => "
+					SELECT
+						'discounts' Plural,
+						DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
+						CONCAT(d.percentDiscount, '%') GroupLabel,
+						COUNT(*) GroupQuantity,
+						'transaction' GroupQuantityLabel,
+						-SUM(d.total) GroupValue
+					FROM {$transarchive} d
+					WHERE d.emp_no != 9999 AND d.register_no != 99
+						AND d.trans_status != 'X'
+						AND d.trans_type = 'S' AND d.upc = 'DISCOUNT'
+					GROUP BY TransDate, percentDiscount
+				",
+		'tender' => "
+					SELECT
+						'tenders' Plural,
+						DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
+						t.TenderName GroupLabel,
+						COUNT(*) GroupQuantity,
+						'transaction' GroupQuantityLabel,
+						-SUM(d.total) GroupValue
+					FROM {$transarchive} d
+						LEFT JOIN office_opdata.tenders t ON d.trans_subtype = t.TenderCode
+					WHERE d.emp_no != 9999 AND d.register_no != 99
+						AND d.trans_status != 'X'
+						AND d.trans_type = 'T'
+					GROUP BY TransDate, t.tenderName
+					ORDER BY TransDate,
+						FIELD(d.trans_subtype, 'CA', 'CK', 'CC', 'DC', 'EF', d.trans_subtype),
+						d.trans_subtype
+				",
+		);
     foreach ($report_params as $report => $query) {
+
         $receipt .= "\n";
 
         $receipt .= ReceiptLib::boldFont();
@@ -123,6 +121,7 @@ static public function get()
 
         $result = $db_a->query($query);
         $total_quantity = $total_value = 0;
+		$plural = $group_label = $group_quantity = $group_quantity_label = $group_value = '';
 
         while ($row = $db_a->fetchRow($result)) {
             $plural = $row['Plural'];
@@ -152,6 +151,7 @@ static public function get()
         $receipt .= ReceiptLib::normalFont();
     }
 
+	$checksum = 0;
     $receipt .= "\n";
     foreach ($total_values as $report => $total_value) {
         switch ($report) {
@@ -191,8 +191,6 @@ static public function get()
     $receipt .= "\n";
     $receipt .= ReceiptLib::centerString("------------------------------------------------------");
     $receipt .= "\n";
-//     $receipt .= str_repeat("\n", 2);
-//     $receipt .= chr(28).'p'.chr(1).'0'; // print Co-op logo from NVRAM slot 1
 
     $receipt .= str_repeat("\n", 4);
     $receipt .= chr(27).chr(105); // cut
