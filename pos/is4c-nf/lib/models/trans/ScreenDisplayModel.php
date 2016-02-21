@@ -77,7 +77,7 @@ class ScreenDisplayModel extends ViewModel
                 THEN ".$con->concat('quantity',"' @ '",'volume',"' for '",'unitPrice','')."
             WHEN (abs(itemQtty) > 1 and discounttype = 3)
                 THEN ".$con->concat('itemQtty',"' / '",'unitPrice','')."
-            WHEN (abs(itemQtty) > 1)
+            WHEN (abs(itemQtty) NOT IN (0, 1))
                 THEN ".$con->concat('quantity',"' @ '",'unitPrice','')."
             WHEN (voided = 3)
                 THEN 'Total '

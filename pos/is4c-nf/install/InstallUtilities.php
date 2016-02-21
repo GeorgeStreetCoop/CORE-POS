@@ -1240,7 +1240,7 @@ class InstallUtilities extends LibraryClass
                     then ".$db->concat('quantity', "' @ '", 'volume', "' /'", 'unitPrice','')."
                 when abs(itemQtty) > 1 and discounttype = 3
                     then ".$db->concat('ItemQtty', "' / '", 'unitPrice','')."
-                when abs(itemQtty) > 1
+                when abs(itemQtty) NOT IN (0, 1)
                     then ".$db->concat('quantity', "' @ '", 'unitPrice','')."
                 when matched > 0
                     then '1 w/ vol adj'
