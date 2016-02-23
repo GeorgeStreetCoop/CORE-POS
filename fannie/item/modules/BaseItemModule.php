@@ -635,17 +635,21 @@ HTML;
             }
             $ret .= '</select></td>';
 
-            $ret .= '<td colspan="4" class="small">
+            $ret .= '<td colspan="2" class="small form-inline">
+                <label>Scale
+                <select name="Scale[]"
+                    class="form-control input-sm syncable-input">
+                    <option value="0"' . ($rowItem['scale'] == 0 ? ' selected' : '') . '>Integer</option>
+                    <option value="1"' . ($rowItem['scale'] == 1 ? ' selected' : '') . '>Standard/Precise</option>
+                    <option value="2"' . ($rowItem['scale'] == 2 ? ' selected' : '') . '>Decimal</option>
+                </select>
+                </label>
+                </td>
+                <td colspan="2" class="small">
                 <label>FS
                 <input type="checkbox" value="{{store_id}}" name="FS[]" id="FS{{store_id}}"
                     class="syncable-checkbox"
                     ' . ($rowItem['foodstamp'] == 1 ? 'checked' : '') . ' />
-                </label>
-                &nbsp;&nbsp;&nbsp;&nbsp;
-                <label>Scale
-                <input type="checkbox" value="{{store_id}}" name="Scale[]" 
-                    class="scale-checkbox syncable-checkbox"
-                    ' . ($rowItem['scale'] == 1 ? 'checked' : '') . ' />
                 </label>
                 &nbsp;&nbsp;&nbsp;&nbsp;
                 <label>QtyFrc
@@ -1084,7 +1088,7 @@ HTML;
             $fs = $this->formNoEx('FS', array());
             $model->foodstamp(in_array($stores[$i], $fs) ? 1 : 0);
             $scale = $this->formNoEx('Scale', array());
-            $model->scale(in_array($stores[$i], $scale) ? 1 : 0);
+            $model->scale($scale[0]);
             $qtyFrc = $this->formNoEx('QtyFrc', array());
             $model->qttyEnforced(in_array($stores[$i], $qtyFrc) ? 1 : 0);
             $wic = FormLib::get('prod-wicable', array());

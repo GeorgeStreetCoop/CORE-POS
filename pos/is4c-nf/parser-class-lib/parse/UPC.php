@@ -263,7 +263,7 @@ class UPC extends Parser
             return $ret;
         }
 
-        $scale = ($row["scale"] == 0) ? 0 : 1;
+        $scale = intval($row['scale']);
         $qttyEnforced = $row["qttyEnforced"];
         /* use scaleprice bit column to indicate 
            whether values should be interpretted as 

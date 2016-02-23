@@ -35,7 +35,7 @@ include_once(dirname(__FILE__).'/../lib/AutoLoader.php');
   - "entered-item" is what the cashier entered. This
     may be simply a UPC but can include prefixes
     if necessary. For example, prefix "RF" on refunds.
-  - "qty-mode" see MODE_INTEGER, MODE_PRECISE
+  - "qty-mode" see MODE_INTEGER, MODE_PRECISE, MODE_DECIMAL
 
   MODE_INTEGER (0) is for items that are not sold by
   weight. Fractional or decimal quantities are not
@@ -49,6 +49,11 @@ include_once(dirname(__FILE__).'/../lib/AutoLoader.php');
   That is, entering "123" gives an effective quantity
   of 0.123. This is only appropriate for items that
   always weigh less than 1.0.
+
+  MODE_DECIMAL (2) is for items that are sold by
+  weight but are too light to measure accurately with
+  the regular scanner-scale. This value will be used
+  exactly as entered, including decimal point (if any).
 */
 class QuantityEntryPage extends BasicCorePage 
 {
@@ -57,6 +62,7 @@ class QuantityEntryPage extends BasicCorePage
 
     const MODE_INTEGER = 0;
     const MODE_PRECISE = 1;
+    const MODE_DECIMAL = 2;
 
     private function getPrefixes($input_string)
     {
@@ -79,11 +85,20 @@ class QuantityEntryPage extends BasicCorePage
     function preprocess()
     {
         $this->box_color="coloredArea";
-        $this->msg = _("quantity required");
         $mode = FormLib::get('qty-mode');
-        if ($mode == self::MODE_PRECISE) {
-            $this->msg = _('precision weight required');
-        }
+        switch ($mode) {
+        	case self::MODE_PRECISE:
+	            $this->msg = _('precision weight required');
+		        $invalid_msg = _('invalid precision weight');
+	            break;
+        	case self::MODE_DECIMAL:
+	            $this->msg = _('decimal weight required');
+		        $invalid_msg = _('invalid decimal weight');
+	            break;
+			default:
+		        $this->msg = _("quantity required");
+		        $invalid_msg = _("invalid quantity");
+		}
 
         $qtty = strtoupper(trim(FormLib::get('reginput')));
         if ($qtty == "CL") {
@@ -114,10 +129,7 @@ class QuantityEntryPage extends BasicCorePage
             return false;
         } elseif ($qtty !== '') {
             $this->box_color="errorColoredArea";
-            $this->msg = _("invalid quantity");
-            if ($mode == self::MODE_PRECISE) {
-                $this->msg = _('invalid precision weight');
-            }
+            $this->msg = $invalid_msg;
         }
 
         return true;
@@ -127,6 +139,7 @@ class QuantityEntryPage extends BasicCorePage
     {
         /**
           If it's a number, check error conditions.
+          Except for explicit decimal mode (MODE_DECIMAL),
           The number should always be an integer. In
           precision mode the number must be exactly three
           digits. This mode is for very light items
@@ -134,6 +147,9 @@ class QuantityEntryPage extends BasicCorePage
           of hundreths. If the number is valid it's converted
           back to decimal in precision mode.
         */
+        if ($mode == self::MODE_DECIMAL) {
+        	return $qtty;
+        }
         if ($qtty != ((int)$qtty)) {
             $this->box_color="errorColoredArea";
             if ($mode == self::MODE_PRECISE) {
