@@ -64,8 +64,9 @@ static public function get()
 					WHERE d.emp_no != 9999 AND d.register_no != 99
 						AND d.trans_status != 'X'
 						AND d.trans_type = 'T'
-					GROUP BY TransDate, t.tenderName
-					ORDER BY TransDate,
+						AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
+					GROUP BY t.tenderName
+					ORDER BY
 						FIELD(d.trans_subtype, 'CA', 'CK', 'CC', 'DC', 'EF', d.trans_subtype),
 						d.trans_subtype
 				",
@@ -78,18 +79,19 @@ static public function get()
         $report_params += array(
             'department' => "
                         SELECT
-                                'departments' Plural,
-                                DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
-                                CONCAT_WS(' ', t.dept_no, t.dept_name) GroupLabel,
-                                SUM(IF(d.department IN (102, 113) OR d.scale = 1, 1, d.quantity)) GroupQuantity,
-                                'item' GroupQuantityLabel,
-                                SUM(d.total) GroupValue
+							'departments' Plural,
+							DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
+							CONCAT_WS(' ', t.dept_no, t.dept_name) GroupLabel,
+							SUM(IF(d.department IN (102, 113) OR d.scale = 1, 1, d.quantity)) GroupQuantity,
+							'item' GroupQuantityLabel,
+							SUM(d.total) GroupValue
                         FROM {$transarchive} d
-                                LEFT JOIN office_opdata.departments t ON d.department=t.dept_no
+							LEFT JOIN office_opdata.departments t ON d.department=t.dept_no
                         WHERE d.emp_no != 9999 AND d.register_no != 99
-                                AND d.trans_status != 'X'
-                                AND d.department != 0
-                        GROUP BY TransDate, t.dept_no
+							AND d.trans_status != 'X'
+							AND d.department != 0
+							AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
+                        GROUP BY t.dept_no
                     ",
             'tax' => "
                         SELECT
@@ -103,7 +105,8 @@ static public function get()
                         WHERE d.emp_no != 9999 AND d.register_no != 99
                             AND d.trans_status != 'X'
                             AND d.trans_type = 'A' AND d.upc = 'TAX'
-                        GROUP BY TransDate, (total = 0)
+							AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
+                        GROUP BY (total = 0)
                     ",
             'discount' => "
                         SELECT
@@ -117,7 +120,8 @@ static public function get()
                         WHERE d.emp_no != 9999 AND d.register_no != 99
                             AND d.trans_status != 'X'
                             AND d.trans_type = 'S' AND d.upc = 'DISCOUNT'
-                        GROUP BY TransDate, percentDiscount
+							AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
+                        GROUP BY percentDiscount
                     ",
             'tender' => "
                         SELECT
@@ -132,8 +136,9 @@ static public function get()
                         WHERE d.emp_no != 9999 AND d.register_no != 99
                             AND d.trans_status != 'X'
                             AND d.trans_type = 'T'
-                        GROUP BY TransDate, t.tenderName
-                        ORDER BY TransDate,
+							AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
+                        GROUP BY t.tenderName
+                        ORDER BY
                             FIELD(d.trans_subtype, 'CA', 'CK', 'CC', 'DC', 'EF', d.trans_subtype),
                             d.trans_subtype
                     ",
