@@ -92,7 +92,7 @@ static public function get()
 	else {
 		$receipt .= "\n";
 		$receipt .= ReceiptLib::boldFont();
-		$receipt .= "Backend server is unavailable; printing local data.";
+		$receipt .= "Server is unavailable; printing lane data only.";
 		$receipt .= ReceiptLib::normalFont();
 		$receipt .= "\n";
 
