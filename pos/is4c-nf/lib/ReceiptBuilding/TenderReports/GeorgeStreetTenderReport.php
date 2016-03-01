@@ -62,7 +62,7 @@ static public function get()
 						-SUM(d.total) GroupValue
 					FROM {$transarchive} d
 						LEFT JOIN {$opdata}.tenders t ON d.trans_subtype = t.TenderCode
-					WHERE d.emp_no != 9999 AND (TRUE AND TRUE)
+					WHERE d.emp_no != 9999 AND d.register_no != 99
 						AND d.trans_status != 'X'
 						AND d.trans_type = 'T'
 						AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
@@ -112,7 +112,7 @@ static public function get()
 						SUM(d.total) GroupValue
 					FROM {$transarchive} d
 						LEFT JOIN {$opdata}.departments t ON d.department=t.dept_no
-					WHERE d.emp_no != 9999 AND (TRUE AND TRUE)
+					WHERE d.emp_no != 9999 AND d.register_no != 99
 						AND d.trans_status != 'X'
 						AND d.department != 0
 						AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
@@ -127,7 +127,7 @@ static public function get()
 						'transaction' GroupQuantityLabel,
 						SUM(d.total) GroupValue
 					FROM {$transarchive} d
-					WHERE d.emp_no != 9999 AND (TRUE AND TRUE)
+					WHERE d.emp_no != 9999 AND d.register_no != 99
 						AND d.trans_status != 'X'
 						AND d.trans_type = 'A' AND d.upc = 'TAX'
 						AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
@@ -142,7 +142,7 @@ static public function get()
 						'transaction' GroupQuantityLabel,
 						-SUM(d.total) GroupValue
 					FROM {$transarchive} d
-					WHERE d.emp_no != 9999 AND (TRUE AND TRUE)
+					WHERE d.emp_no != 9999 AND d.register_no != 99
 						AND d.trans_status != 'X'
 						AND d.trans_type = 'S' AND d.upc = 'DISCOUNT'
 						AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
@@ -158,7 +158,7 @@ static public function get()
 						-SUM(d.total) GroupValue
 					FROM {$transarchive} d
 						LEFT JOIN {$opdata}.tenders t ON d.trans_subtype = t.TenderCode
-					WHERE d.emp_no != 9999 AND (TRUE AND TRUE)
+					WHERE d.emp_no != 9999 AND d.register_no != 99
 						AND d.trans_status != 'X'
 						AND d.trans_type = 'T'
 						AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
