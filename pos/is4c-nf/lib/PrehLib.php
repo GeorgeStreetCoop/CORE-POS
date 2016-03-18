@@ -1227,6 +1227,9 @@ static public function percentDiscount($strl,$json=array())
         );
     } else {
         $dbc = Database::tDataConnect();
+        if ($strl != 0) {
+            TransRecord::discountnotify($strl);
+        }
         $dbc->query("update localtemptrans set percentDiscount = ".$strl);
         CoreLocal::set('percentDiscount', $strl);
         DiscountModule::transReset();
