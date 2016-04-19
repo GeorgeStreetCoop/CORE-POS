@@ -50,7 +50,7 @@ static public function get()
     if ($lane_db->isConnected('core_translog')) {
 	    $this_lane = CoreLocal::get('laneno');
 		$transarchive = 'localtranstoday';
-		$opdata = 'core_opdata';
+		$opdata_dbname = 'core_opdata';
 		$report_params += array(
 			"Lane {$this_lane} tender" => "
 					SELECT
@@ -61,7 +61,7 @@ static public function get()
 						'transaction' GroupQuantityLabel,
 						-SUM(d.total) GroupValue
 					FROM {$transarchive} d
-						LEFT JOIN {$opdata}.tenders t ON d.trans_subtype = t.TenderCode
+						LEFT JOIN {$opdata_dbname}.tenders t ON d.trans_subtype = t.TenderCode
 					WHERE d.emp_no != 9999 AND d.register_no != 99
 						AND d.trans_status != 'X'
 						AND d.trans_type = 'T'
@@ -80,14 +80,15 @@ static public function get()
 
 	if ($office_live) {
 		$office_db = Database::mDataConnect();
-	    if (!$office_db->isConnected('office_trans')) {
+	    if (!$office_db->isConnected(CoreLocal::get('mDatabase'))) {
 	    	$office_live = false;
 	    }
 	}
 
 	if ($office_live) {
+		$office_dbname = CoreLocal::get('mDatabase'); //'office';
 		$transarchive = 'dtransactions';
-		$opdata = 'office_opdata';
+		$opdata_dbname = 'office_opdata';
 	}
 	else {
 		$receipt .= "\n";
@@ -97,8 +98,9 @@ static public function get()
 		$receipt .= "\n";
 
 		$office_db = Database::tDataConnect();
+		$office_dbname = CoreLocal::get('tDatabase'); //'lane';
 		$transarchive = 'localtrans';
-		$opdata = 'core_opdata';
+		$opdata_dbname = 'core_opdata';
 	}
 
 	$report_params += array(
@@ -111,7 +113,7 @@ static public function get()
 						'item' GroupQuantityLabel,
 						SUM(d.total) GroupValue
 					FROM {$transarchive} d
-						LEFT JOIN {$opdata}.departments t ON d.department=t.dept_no
+						LEFT JOIN {$opdata_dbname}.departments t ON d.department=t.dept_no
 					WHERE d.emp_no != 9999 AND d.register_no != 99
 						AND d.trans_status != 'X'
 						AND d.department != 0
@@ -157,7 +159,7 @@ static public function get()
 						'transaction' GroupQuantityLabel,
 						-SUM(d.total) GroupValue
 					FROM {$transarchive} d
-						LEFT JOIN {$opdata}.tenders t ON d.trans_subtype = t.TenderCode
+						LEFT JOIN {$opdata_dbname}.tenders t ON d.trans_subtype = t.TenderCode
 					WHERE d.emp_no != 9999 AND d.register_no != 99
 						AND d.trans_status != 'X'
 						AND d.trans_type = 'T'
@@ -215,7 +217,12 @@ error_log("$report => $query");
 		$total_value = number_format($total_value, 2);
 
 		$receipt .= ReceiptLib::boldFont();
-		$receipt .= "All ".ucwords($plural).": \${$total_value} from {$total_quantity} {$group_quantity_label}".($total_quantity==1?'':'s')."\n";
+		if ($plural) {
+			$receipt .= "All ".ucwords($plural).": \${$total_value} from {$total_quantity} {$group_quantity_label}".($total_quantity==1?'':'s')."\n";
+		}
+		else {
+			$receipt .= "No data match in {$office_dbname}.{$transarchive}\n";
+		}
 		$receipt .= ReceiptLib::normalFont();
 	}
 
