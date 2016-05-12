@@ -15,4 +15,5 @@ $my_menu = array(
     'Member Renewal Fee' => 'DP1220',
     'Donation' => 'DP1240',
     'Payout / RA' => 'DP1250',
+    'Settle Member Tab' => 'DP1260',
 );
