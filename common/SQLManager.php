@@ -111,7 +111,7 @@ class SQLManager
         }
         $this->connections[$database] = $conn;
 
-        $this->last_connection_error = false;
+        $this->last_connect_error = false;
         if (!$connected) {
             $this->last_connect_error = $conn->ErrorMsg();
             return $this->connectAndCreate($server, $type, $username, $password, $database);
@@ -130,7 +130,7 @@ class SQLManager
         $conn->SetFetchMode(ADODB_FETCH_BOTH);
         $connected = $conn->Connect($server,$username,$password);
         if ($connected) {
-            $this->last_connection_error = false;
+            $this->last_connect_error = false;
             $stillok = $conn->Execute("CREATE DATABASE $database");
             if (!$stillok) {
                 $this->last_connect_error = $conn->ErrorMsg();
