@@ -100,6 +100,11 @@ class SQLManager
         }
 
         $conn = ADONewConnection($type);
+        if (!is_object($conn)) {
+        	$this->last_connect_error = "Couldn't create ADO connection of type '$type'.";
+        	return false;
+        }
+
         $conn->SetFetchMode(ADODB_FETCH_BOTH);
         $connected = false;
         if (isset($this->connections[$database]) || $new) {
@@ -127,6 +132,11 @@ class SQLManager
     private function connectAndCreate($server, $type, $username, $password, $database)
     {
         $conn = ADONewConnection($type);
+        if (!is_object($conn)) {
+        	$this->last_connect_error = "Couldn't create ADO connection of type '$type'.";
+        	return false;
+        }
+
         $conn->SetFetchMode(ADODB_FETCH_BOTH);
         $connected = $conn->Connect($server,$username,$password);
         if ($connected) {
