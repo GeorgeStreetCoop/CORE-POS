@@ -74,26 +74,10 @@ static public function get()
 			);
 	}
 
-	$office_host = CoreLocal::get('mServer');
-	$office_ping = shell_exec("ping -q -t2 -c3 {$office_host}");
-	$office_live = (preg_match('~0 packets received~', $office_ping)? false : true);
-
-	if ($office_live) {
-		$office_db = Database::mDataConnect();
-	    if (!$office_db->isConnected(CoreLocal::get('mDatabase'))) {
-	    	$office_live = false;
-	    }
-	}
-
-	if ($office_live) {
-		$office_dbname = CoreLocal::get('mDatabase'); //'office';
-		$transarchive = 'dtransactions';
-		$opdata_dbname = 'office_opdata';
-	}
-	else {
+	if ($this_lane > 1) {
 		$receipt .= "\n";
 		$receipt .= ReceiptLib::boldFont();
-		$receipt .= "Server is unavailable; printing lane data only.";
+		$receipt .= "Printing lane data only.";
 		$receipt .= ReceiptLib::normalFont();
 		$receipt .= "\n";
 
@@ -102,74 +86,104 @@ static public function get()
 		$transarchive = 'localtrans';
 		$opdata_dbname = 'core_opdata';
 	}
+	else {
+		$office_host = CoreLocal::get('mServer');
+		$office_ping = shell_exec("ping -q -t2 -c3 {$office_host}");
+		$office_live = (preg_match('~0 packets received~', $office_ping)? false : true);
 
-	$report_params += array(
-		'department' => "
-					SELECT
-						'departments' Plural,
-						DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
-						CONCAT_WS(' ', t.dept_no, t.dept_name) GroupLabel,
-						SUM(IF(d.department IN (102, 113) OR d.scale = 1, 1, d.quantity)) GroupQuantity,
-						'item' GroupQuantityLabel,
-						SUM(d.total) GroupValue
-					FROM {$transarchive} d
-						LEFT JOIN {$opdata_dbname}.departments t ON d.department=t.dept_no
-					WHERE d.emp_no != 9999 AND d.register_no != 99
-						AND d.trans_status != 'X'
-						AND d.department != 0
-						AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
-					GROUP BY t.dept_no
-				",
-		'tax' => "
-					SELECT
-						'taxes' Plural,
-						DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
-						IF(d.total = 0, 'Non-taxed', 'Taxed') GroupLabel,
-						COUNT(*) GroupQuantity,
-						'transaction' GroupQuantityLabel,
-						SUM(d.total) GroupValue
-					FROM {$transarchive} d
-					WHERE d.emp_no != 9999 AND d.register_no != 99
-						AND d.trans_status != 'X'
-						AND d.trans_type = 'A' AND d.upc = 'TAX'
-						AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
-					GROUP BY (total = 0)
-				",
-		'discount' => "
-					SELECT
-						'discounts' Plural,
-						DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
-						CONCAT(d.percentDiscount, '%') GroupLabel,
-						COUNT(*) GroupQuantity,
-						'transaction' GroupQuantityLabel,
-						-SUM(d.total) GroupValue
-					FROM {$transarchive} d
-					WHERE d.emp_no != 9999 AND d.register_no != 99
-						AND d.trans_status != 'X'
-						AND d.trans_type = 'S' AND d.upc = 'DISCOUNT'
-						AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
-					GROUP BY percentDiscount
-				",
-		'tender' => "
-					SELECT
-						'tenders' Plural,
-						DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
-						t.TenderName GroupLabel,
-						COUNT(*) GroupQuantity,
-						'transaction' GroupQuantityLabel,
-						-SUM(d.total) GroupValue
-					FROM {$transarchive} d
-						LEFT JOIN {$opdata_dbname}.tenders t ON d.trans_subtype = t.TenderCode
-					WHERE d.emp_no != 9999 AND d.register_no != 99
-						AND d.trans_status != 'X'
-						AND d.trans_type = 'T'
-						AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
-					GROUP BY t.tenderName
-					ORDER BY
-						FIELD(d.trans_subtype, 'CA', 'CK', 'CC', 'DC', 'EF', d.trans_subtype),
-						d.trans_subtype
-				",
-		);
+		if ($office_live) {
+			$office_db = Database::mDataConnect();
+			if (!$office_db->isConnected(CoreLocal::get('mDatabase'))) {
+				$office_live = false;
+			}
+		}
+
+		if ($office_live) {
+			$office_dbname = CoreLocal::get('mDatabase'); //'office';
+			$transarchive = 'dtransactions';
+			$opdata_dbname = 'office_opdata';
+		}
+		else {
+			$receipt .= "\n";
+			$receipt .= ReceiptLib::boldFont();
+			$receipt .= "Server is unavailable; printing lane data only.";
+			$receipt .= ReceiptLib::normalFont();
+			$receipt .= "\n";
+
+			$office_db = Database::tDataConnect();
+			$office_dbname = CoreLocal::get('tDatabase'); //'lane';
+			$transarchive = 'localtrans';
+			$opdata_dbname = 'core_opdata';
+		}
+
+		$report_params += array(
+			'department' => "
+						SELECT
+							'departments' Plural,
+							DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
+							CONCAT_WS(' ', t.dept_no, t.dept_name) GroupLabel,
+							SUM(IF(d.department IN (102, 113) OR d.scale = 1, 1, d.quantity)) GroupQuantity,
+							'item' GroupQuantityLabel,
+							SUM(d.total) GroupValue
+						FROM {$transarchive} d
+							LEFT JOIN {$opdata_dbname}.departments t ON d.department=t.dept_no
+						WHERE d.emp_no != 9999 AND d.register_no != 99
+							AND d.trans_status != 'X'
+							AND d.department != 0
+							AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
+						GROUP BY t.dept_no
+					",
+			'tax' => "
+						SELECT
+							'taxes' Plural,
+							DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
+							IF(d.total = 0, 'Non-taxed', 'Taxed') GroupLabel,
+							COUNT(*) GroupQuantity,
+							'transaction' GroupQuantityLabel,
+							SUM(d.total) GroupValue
+						FROM {$transarchive} d
+						WHERE d.emp_no != 9999 AND d.register_no != 99
+							AND d.trans_status != 'X'
+							AND d.trans_type = 'A' AND d.upc = 'TAX'
+							AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
+						GROUP BY (total = 0)
+					",
+			'discount' => "
+						SELECT
+							'discounts' Plural,
+							DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
+							CONCAT(d.percentDiscount, '%') GroupLabel,
+							COUNT(*) GroupQuantity,
+							'transaction' GroupQuantityLabel,
+							-SUM(d.total) GroupValue
+						FROM {$transarchive} d
+						WHERE d.emp_no != 9999 AND d.register_no != 99
+							AND d.trans_status != 'X'
+							AND d.trans_type = 'S' AND d.upc = 'DISCOUNT'
+							AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
+						GROUP BY percentDiscount
+					",
+			'tender' => "
+						SELECT
+							'tenders' Plural,
+							DATE_FORMAT(d.datetime, '%Y-%m-%d') TransDate,
+							t.TenderName GroupLabel,
+							COUNT(*) GroupQuantity,
+							'transaction' GroupQuantityLabel,
+							-SUM(d.total) GroupValue
+						FROM {$transarchive} d
+							LEFT JOIN {$opdata_dbname}.tenders t ON d.trans_subtype = t.TenderCode
+						WHERE d.emp_no != 9999 AND d.register_no != 99
+							AND d.trans_status != 'X'
+							AND d.trans_type = 'T'
+							AND DATE_FORMAT(d.datetime, '%Y-%m-%d') = (SELECT MAX(DATE_FORMAT(datetime, '%Y-%m-%d')) FROM {$transarchive})
+						GROUP BY t.tenderName
+						ORDER BY
+							FIELD(d.trans_subtype, 'CA', 'CK', 'CC', 'DC', 'EF', d.trans_subtype),
+							d.trans_subtype
+					",
+			);
+	}
 
 	foreach ($report_params as $report => $query) {
 error_log("$report => $query");
